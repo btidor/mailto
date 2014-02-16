@@ -24,13 +24,18 @@
             </div>
           </noscript>
           
-          <form class="well" id="landing">
+          <div id="alert" class="alert alert-dismissable hidden">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <strong class="error-title"></strong> <span class="error-text"></span>
+          </div>
+          
+          <form class="well hidden" id="landing">
             <p>
               This web application allows you to re-route messages destined for your <strong>@mit.edu</strong>
               email address, for example by forwading copies to another inbox.
             </p>
             
-            <a id="login" href="#" class="btn btn-primary">Log In with Webathena</a>
+            <a id="login" href="#" class="btn btn-primary">Achtung! This text set in app.js.</a>
           </form>
           
           <div id="app" class="hidden">
@@ -62,5 +67,7 @@
     
     <script src="js/jquery-1.11.0.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/winchan.js"></script>
+    <script src="js/app.js"></script>
   </body>
 </html>
