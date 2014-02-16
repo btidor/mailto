@@ -15,11 +15,11 @@
      * Display a visual alert to the user.
      *
      * @param title text to prefix the message in bold, or empty
-     * @param message the message to display
+     * @param message the message to display; text only
      * @param type one of 'danger', 'warning', 'info', 'success'; controls the
      *        color of the alert
      * @param an optional tag, added as a class, to allow for batch dismissal
-     *        via $( ".tag" ).close( "alert" );
+     *        via $( ".tag" ).alert( "close" );
      */
     function alert( title, message, type, tag ) {
         var element = $( "#alert" ).clone();
