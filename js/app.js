@@ -2,10 +2,10 @@
     var WEBATHENA_HOST = "https://webathena.mit.edu";
     var REALM = "ATHENA.MIT.EDU";
     var PRINCIPAL = [ "moira", "moira7.mit.edu" ];
-    
+
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
-    
+
     var login = $( "#login" );
     login.attr( "disabled", false );
     login.text( LOGIN_ACTION );
@@ -24,16 +24,16 @@
     function alert( title, message, type, tag ) {
         var element = $( "#alert" ).clone();
 
-        element.prop( "id", "" );        
+        element.prop( "id", "" );
         element.find( ".error-title" ).text( title );
         element.find( ".error-text" ).text( message );
-        
+
 	if ( typeof( tag ) !== "undefined" ) element.addClass( tag );
         element.addClass( "alert-" + type );
         element.removeClass( "hidden" );
         $( "#alert" ).after( element );
     }
-    
+
     login.click(function( event ) {
         event.preventDefault();
         login.attr( "disabled", true );
@@ -49,7 +49,7 @@
         }, function( err, r ) {
             login.attr( "disabled", false );
             login.text( LOGIN_ACTION );
-            
+
             if ( err ) {
                 console.log( "Webathena returned err: " + err );
                 if ( err == "unknown closed window" ) {
