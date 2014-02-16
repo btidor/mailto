@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Forwarding</title>
+    
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div class="page-header">
+            <h1>Email Forwarding</h1>
+            <!-- Image Credit: http://www.iconspedia.com/icon/airmail-circle-icon-42962.html -->
+          </div>
+          
+          <noscript>
+            <div class="alert alert-info">
+              To continue, please enable Javascript.
+            </div>
+          </noscript>
+          
+          <form class="well" id="landing">
+            <p>
+              This web application allows you to re-route messages destined for your <strong>@mit.edu</strong>
+              email address, for example by forwading copies to another inbox.
+            </p>
+            
+            <a id="login" href="#" class="btn btn-primary">Log In with Webathena</a>
+          </form>
+          
+          <div id="app" class="hidden">
+            <h4><small>Logged in as <strong>btidor@mit.edu</strong></small></h4>
+            <table class="table">
+              <tr>
+                <td><strong><a href="https://owa.exchange.mit.edu/owa/" target="_blank">Exchange &ndash; btidor@exchange.mit.edu</a></strong></td>
+                <td class="action"><a href="#">Remove</a></td>
+              </tr>
+              <tr>
+                <td><strong><a href="https://webmail.mit.edu/" target="_blank">IMAP &ndash; btidor@po12.mit.edu</a></strong></td>
+                <td class="action"><a href="#">Remove</a></td>
+              </tr>
+              <tr>
+                <td>benjamintidor+mit<strong>@gmail.com</strong></td>
+                <td class="action"><a href="#">Remove</a></td>
+              </tr>
+              <tr class="form-contents">
+                <td><input type="email" class="form-control input-sm" id="address" placeholder="username@example.com"></td>
+                <td class="action"><a href="#">Add</a></td>
+              </tr>
+            </table>
+            
+            <p><a href="#">Restore Default Settings</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script src="js/jquery-1.11.0.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>

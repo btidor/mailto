@@ -1,0 +1,30 @@
+.page-header {
+  background: url(../img/envelope-bg.png) no-repeat right bottom;
+  position: relative;
+  height: 112px;
+  margin-top: 20px;
+}
+
+.page-header h1,
+.page-header h2 {
+  position: absolute;
+  bottom: 0;
+}
+
+#landing p {
+  margin-bottom: 1.5em;
+}
+
+#app {
+  margin-top: 3em;
+}
+
+#app h4 {
+  text-align: right;
+  padding-right: 10px;
+}
+
+td.action {
+  text-align: right;
+  vertical-align: middle;
+}
