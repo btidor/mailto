@@ -3,6 +3,8 @@
     var REALM = "ATHENA.MIT.EDU";
     var PRINCIPAL = [ "moira", "moira7.mit.edu" ];
 
+    var SESSION_COOKIE = "mailto-session";
+
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
@@ -14,7 +16,7 @@
      *
      * @param title text to prefix the message in bold, or empty
      * @param message the message to display; text only
-     * @param type one of 'danger', 'warning', 'info', 'success'; controls the
+     * @param type one of "danger", "warning", "info", "success"; controls the
      *        color of the alert
      * @param an optional tag, added as a class, to allow for batch dismissal
      *        via $( ".tag" ).alert( "close" );
@@ -53,6 +55,20 @@
 	// Disable login button, just in case
 	$( "#login" ).attr( "disabled", true);
 	$( "#login" ).text( LOGIN_ONGOING );
+	
+	// Query to load results from API
+	$.ajax({
+	    type: "POST",
+	    url: "./api/list",
+	    data: { session: $.cookie( SESSION_COOKIE ) },
+	}).done( function( msg ) {
+	    alert( "Success!", msg, "success" );
+	}).fail( function ( jqXHR ) {
+	    alert( "API Error", jqXHR.statusText, "danger" );
+	    console.log("Request to ./api/list failed:")
+	    console.log(jqXHR);
+	});
+
     }
 
     /* Reset Page on Load */
@@ -61,7 +77,7 @@
     login.text( LOGIN_ACTION );
     $( "#landing" ).removeClass( "hidden" );
 
-    var session = $.cookie( "mailto-session" );
+    var session = $.cookie( SESSION_COOKIE );
     if ( session !== undefined ) {
 	console.log( "Loading session from cookie..." );
 	logmein( session );
@@ -116,7 +132,7 @@
 
             // Success! Put session information into a cookie and update UI
             console.log( "Login succeeded." );
-            $.cookie( "mailto-session", r.session, {
+            $.cookie( SESSION_COOKIE , r.session, {
                 secure: true
             });
             logmein( r.session );
