@@ -119,8 +119,8 @@
                 console.log( r );
                 if ( r.status == "DENIED" ) {
                     alert( "Login Failed.",
-                           "I need \"mailing lists and groups\" access to change " +
-                           "your forwarding settings.",
+                           "I need \"mailing lists and groups\" access in order " +
+                           "to change your forwarding settings.",
                            "warning", "alert-login");
                 } else {
                     alert( "Achtung!",
