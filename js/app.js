@@ -6,10 +6,8 @@
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
-    var login = $( "#login" );
-    login.attr( "disabled", false );
-    login.text( LOGIN_ACTION );
-    $( "#landing" ).removeClass( "hidden" );
+    // Automatically JSON-encode/decode objects into cookies
+    $.cookie.json = true;
 
     /*
      * Display a visual alert to the user.
@@ -34,6 +32,42 @@
         $( "#alert" ).after( element );
     }
 
+    /*
+     * Update the UI to reflect that the user is logged in.
+     *
+     * @param session r.session returned by Webathena
+     */
+    function logmein( session ) {
+	var username = session.cname.nameString[0];
+
+	// Dismiss earlier login errors
+	$( ".alert-login" ).alert( "close" );
+
+	// Put username into relevant divs
+	$( ".username" ).text( username );
+
+	// Hide previous view, show next view
+	$( "#landing" ).addClass( "hidden" );
+	$( "#app" ).removeClass( "hidden" );
+
+	// Disable login button, just in case
+	$( "#login" ).attr( "disabled", true);
+	$( "#login" ).text( LOGIN_ONGOING );
+    }
+
+    /* Reset Page on Load */
+    var login = $( "#login" );
+    login.attr( "disabled", false );
+    login.text( LOGIN_ACTION );
+    $( "#landing" ).removeClass( "hidden" );
+
+    var session = $.cookie( "mailto-session" );
+    if ( session !== undefined ) {
+	console.log( "Loading session from cookie..." );
+	logmein( session );
+    }
+
+    /* Button Handlers */
     login.click(function( event ) {
         event.preventDefault();
 	login.attr( "disabled", true );
@@ -79,10 +113,13 @@
 		}
                 return;
             }
-	    $( ".alert-login" ).alert( "close" ); // dismiss earlier login errors
-	    $( "#username" ).text(r.session.cname.nameString[0]);
-	    $( "#landing" ).addClass( "hidden" );
-	    $( "#app" ).removeClass( "hidden" );
+
+	    // Success! Put session information into a cookie and update UI
+	    console.log( "Login succeeded." );
+	    $.cookie( "mailto-session", r.session, {
+		secure: true
+	    });
+	    logmein( r.session );
         });
     });
 })();
