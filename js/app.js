@@ -36,8 +36,8 @@
 
     login.click(function( event ) {
         event.preventDefault();
-        login.attr( "disabled", true );
-        login.text( LOGIN_ONGOING );
+	login.attr( "disabled", true );
+	login.text( LOGIN_ONGOING );
 
         WinChan.open({
             url: WEBATHENA_HOST + "/#!request_ticket_v1",
@@ -47,12 +47,12 @@
 		principal: PRINCIPAL
 	    }
         }, function( err, r ) {
-            login.attr( "disabled", false );
-            login.text( LOGIN_ACTION );
-
             if ( err ) {
+		login.attr( "disabled", false );
+		login.text( LOGIN_ACTION );
+
                 console.log( "Webathena returned err: " + err );
-                if ( err == "unknown closed window" ) {
+                if ( err.indexOf( "closed window" ) != -1 ) {
                     // User closed Webathena window. Take no action.
                 } else {
                     alert( "Achtung!",
@@ -62,6 +62,9 @@
                 return;
             }
             if ( r.status !== "OK" ) {
+		login.attr( "disabled", false );
+		login.text( LOGIN_ACTION );
+
                 console.log( "Webathena returned r (" + r.status + "}:");
 		console.log( r );
 		if ( r.status == "DENIED" ) {
@@ -77,7 +80,9 @@
                 return;
             }
 	    $( ".alert-login" ).alert( "close" ); // dismiss earlier login errors
-	    alert( "Success!", "", "success" );
+	    $( "#username" ).text(r.session.cname.nameString[0]);
+	    $( "#landing" ).addClass( "hidden" );
+	    $( "#app" ).removeClass( "hidden" );
         });
     });
 })();
