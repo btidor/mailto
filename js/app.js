@@ -71,55 +71,55 @@
     login.click(function( event ) {
         event.preventDefault();
 	login.attr( "disabled", true );
-	login.text( LOGIN_ONGOING );
+        login.text( LOGIN_ONGOING );
 
         WinChan.open({
             url: WEBATHENA_HOST + "/#!request_ticket_v1",
             relay_url: WEBATHENA_HOST + "/relay.html",
-	    params: {
-		realm: REALM,
-		principal: PRINCIPAL
-	    }
+            params: {
+                realm: REALM,
+                principal: PRINCIPAL
+            }
         }, function( err, r ) {
             if ( err ) {
-		login.attr( "disabled", false );
-		login.text( LOGIN_ACTION );
+                login.attr( "disabled", false );
+                login.text( LOGIN_ACTION );
 
                 console.log( "Webathena returned err: " + err );
                 if ( err.indexOf( "closed window" ) != -1 ) {
                     // User closed Webathena window. Take no action.
                 } else {
                     alert( "Achtung!",
-			   "An error occurred while communicating with Webathena.",
-			   "danger", "alert-login" );
+                           "An error occurred while communicating with Webathena.",
+                           "danger", "alert-login" );
                 }
                 return;
             }
             if ( r.status !== "OK" ) {
-		login.attr( "disabled", false );
-		login.text( LOGIN_ACTION );
+                login.attr( "disabled", false );
+                login.text( LOGIN_ACTION );
 
                 console.log( "Webathena returned r (" + r.status + "}:");
-		console.log( r );
-		if ( r.status == "DENIED" ) {
-		    alert( "Login Failed.",
-			   "I need \"mailing lists and groups\" access to change " +
-			   "your forwarding settings.",
-			   "warning", "alert-login");
-		} else {
+                console.log( r );
+                if ( r.status == "DENIED" ) {
+                    alert( "Login Failed.",
+                           "I need \"mailing lists and groups\" access to change " +
+                           "your forwarding settings.",
+                           "warning", "alert-login");
+                } else {
                     alert( "Achtung!",
-			   "An error occurred while communicating with Webathena.",
-			   "danger", "alert-login" );
-		}
+                           "An error occurred while communicating with Webathena.",
+                           "danger", "alert-login" );
+                }
                 return;
             }
 
-	    // Success! Put session information into a cookie and update UI
-	    console.log( "Login succeeded." );
-	    $.cookie( "mailto-session", r.session, {
-		secure: true
-	    });
-	    logmein( r.session );
+            // Success! Put session information into a cookie and update UI
+            console.log( "Login succeeded." );
+            $.cookie( "mailto-session", r.session, {
+                secure: true
+            });
+            logmein( r.session );
         });
     });
 })();
