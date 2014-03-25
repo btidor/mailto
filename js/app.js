@@ -35,6 +35,13 @@
     }
 
     /*
+     * Refresh the UI with data from the server.
+     */
+    function updateui( response ) {
+	// TODO: writeme
+    }
+
+    /*
      * Update the UI to reflect that the user is logged in.
      *
      * @param session r.session returned by Webathena
@@ -58,17 +65,15 @@
 	
 	// Query to load results from API
 	$.ajax({
-	    type: "POST",
-	    url: "./api/list",
-	    data: { session: $.cookie( SESSION_COOKIE ) },
-	}).done( function( msg ) {
-	    alert( "Success!", msg, "success" );
+	    type: "GET",
+	    url: "./api/v1/" + username,
+	}).done( function( response ) {
+	    updateui(response);
 	}).fail( function ( jqXHR ) {
 	    alert( "API Error", jqXHR.statusText, "danger" );
-	    console.log("Request to ./api/list failed:")
+	    console.log("Request to API failed:")
 	    console.log(jqXHR);
 	});
-
     }
 
     /* Reset Page on Load */
