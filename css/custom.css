@@ -23,7 +23,27 @@
   padding-right: 10px;
 }
 
+td .glyphicon {
+  margin-right: 10px;
+}
+
+.host {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.host-address {
+  font-weight: bold;
+  font-size: 85%;
+}
+
 td.action {
   text-align: right;
   vertical-align: middle;
+}
+
+h5 a,
+td.action a,
+.linkaction {
+  cursor: pointer;
 }
