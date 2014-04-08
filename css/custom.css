@@ -47,3 +47,13 @@ td.action a,
 .linkaction {
   cursor: pointer;
 }
+
+.panel-disabled {
+  background-color: #eee;
+}
+
+#exchange-address,
+#imap-address,
+#external-domain {
+  text-transform: lowercase;
+}

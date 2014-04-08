@@ -11,6 +11,9 @@
     // Automatically JSON-encode/decode objects into cookies
     $.cookie.json = true;
 
+    // Activate timeago plugin
+    $( ".timeago" ).timeago();
+
     /*
      * Display a visual alert to the user.
      *
@@ -35,10 +38,89 @@
     }
 
     /*
-     * Refresh the UI with data from the server.
+     * Refresh the UI with a de-stringified (dictionary) response from the
+     * server.
      */
     function updateui( response ) {
-	// TODO: writeme
+	console.log( response );
+        $( "#lastmod-time" ).timeago( "update", response.modtime );
+        $( "#lastmod-user" ).text( response.modby );
+
+        var exchange = null;
+        var imap = null;
+        var smtp = null;
+        for ( var i = 0; i < response.boxes.length; i++ ) {
+            if ( response.boxes[i].type == "EXCHANGE" )
+                exchange = response.boxes[i];
+            else if ( response.boxes[i].type == "IMAP" )
+                imap = response.boxes[i];
+            else if ( response.boxes[i].type == "SMTP" )
+                smtp = response.boxes[i];
+        }
+
+        var multiHosted = ( imap != null && exchange != null );
+
+        if ( exchange == null ) {
+            $( "#exchange" ).addClass( "hidden" );
+        } else {
+            $( "#exchange" ).removeClass( "hidden" );
+            $( "#exchange-address" ).text( exchange.address );
+            if ( multiHosted ) {
+                if ( exchange.enabled ) {
+                    $( "#exchange-selected" ).removeClass( "hidden" );
+                    $( "#exchange-select" ).addClass( "hidden" );
+                } else {
+                    $( "#exchange-selected" ).addClass( "hidden" );
+                    $( "#exchange-select" ).removeClass( "hidden" );
+                }
+            } else {
+                $( "#exchange-selected" ).addClass( "hidden" );
+                $( "#exchange-select" ).addClass( "hidden" );
+            }
+        }
+
+        if ( imap == null ) {
+            $( "#imap" ).addClass( "hidden" );
+        } else {
+            $( "#imap" ).removeClass( "hidden" );
+            $( "#imap-address" ).text( imap.address );
+            if ( multiHosted ) {
+                if ( imap.enabled ) {
+                    $( "#imap-selected" ).removeClass( "hidden" );
+                    $( "#imap-select" ).addClass( "hidden" );
+                } else {
+                    $( "#imap-selected" ).addClass( "hidden" );
+                    $( "#imap-select" ).removeClass( "hidden" );
+                }
+            } else {
+                $( "#imap-selected" ).addClass( "hidden" );
+                $( "#imap-select" ).addClass( "hidden" );
+            }
+        }
+
+        if ( ( exchange == null || !exchange.enabled ) &&
+             ( imap == null || !imap.enabled ) ) {
+            $( "#hosted-toggle" ).text( "Enable" );
+            $( "#hosted-panel" ).addClass( "panel-disabled" );
+        } else {
+            $( "#hosted-toggle" ).text( "Disable" );
+            $( "#hosted-panel" ).removeClass( "panel-disabled" );
+        }
+
+        if ( smtp == null ) {
+            $( "#external-toggle" ).text( "Enable" );
+            $( "#external-panel" ).addClass( "panel-disabled" );
+            $( "#external" ).addClass( "hidden" );
+        } else {
+            $( "#external-toggle" ).text( "Disable" );
+            $( "#external-panel" ).removeClass( "panel-disabled" );
+            $( "#external" ).removeClass( "hidden" );
+            $( "#external-prefix" ).text( smtp.address.split( "@" )[0] );
+            $( "#external-domain" ).text( "@" + smtp.address.split( "@" )[1] );
+        }
+        console.log( "Exchange: " + exchange );
+        console.log( "IMAP: " + imap );
+        console.log( "SMTP: " + smtp );
     }
 
     /*
@@ -68,11 +150,11 @@
 	    type: "GET",
 	    url: "./api/v1/" + username,
 	}).done( function( response ) {
-	    updateui(response);
+	    updateui( JSON.parse(response) );
 	}).fail( function ( jqXHR ) {
 	    alert( "API Error", jqXHR.statusText, "danger" );
-	    console.log("Request to API failed:")
-	    console.log(jqXHR);
+	    console.log( "Request to API failed:" );
+	    console.log( jqXHR );
 	});
     }
 

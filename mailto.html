@@ -42,32 +42,32 @@
           <div id="app" class="hidden">
             <h4><small>Logged in as <strong><span class="username">unknown</span>@mit.edu</strong></small></h4>
             <div class="panel panel-default">
-              <div class="panel-body">
+              <div class="panel-body" id="hosted-panel">
                 <h5><strong>Hosted Email</strong> &ndash; <a id="hosted-toggle">Disable</a></h5>
                 <table class="table">
-                  <tr id="exchange" id="hosted">
+                  <tr id="exchange" id="exchange">
                     <td>
                       <a href="https://owa.exchange.mit.edu/owa/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">Exchange</span></a>
-                      <span class="host-address text-muted"><span class="username">unknown</span>@exchange.mit.edu</span>
+                      <span class="host-address text-muted" id="exchange-address">unknown@exchange.mit.edu</span>
                     </td>
-                    <td class="action text-muted" id="hosted-toggle">Selected</td>
+                    <td class="action"><span class="text-muted hidden" id="exchange-selected">Selected</span><a class="hidden" id="exchange-select">Switch</a></td>
                   </tr>
                   <tr id="imap">
                     <td>
                       <a href="https://webmail.mit.edu/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">IMAP</span></a>
-                      <span class="host-address text-muted"><span class="username">unknown</span>@po12.mit.edu</span>
+                      <span class="host-address text-muted" id="imap-address">unknown@po12.mit.edu</span>
                     </td>
-                    <td class="action"><a id="imap-toggle">Switch</a></td>
+                    <td class="action"><span class="text-muted hidden" id="imap-selected">Selected</span><a class="hidden" id="imap-select">Switch</a></td>
                   </tr>
                 </table>
               </div>
             </div>
             <div class="panel panel-default">
-              <div class="panel-body">
+              <div class="panel-body" id="external-panel">
                 <h5><strong>External Forwarding</strong> &ndash; <a id="external-toggle">Disable</a></h5>
                 <table class="table" id="external">
                   <tr>
-                    <td><a href="https://www.gmail.com/" target="_blank" id="external-link"><span class="glyphicon glyphicon-send"></span></a><span id="external-prefix">jack.florey<strong id="external-domain">@gmail.com</strong></td>
+                    <td><a href="https://www.gmail.com/" target="_blank" id="external-link"><span class="glyphicon glyphicon-send"></span></a><span id="external-prefix">jack.florey</span><strong id="external-domain">@gmail.com</strong></td>
                     <td class="action"><a id="external-edit">Edit</a></td>
                   </tr>
                 </table>
@@ -75,7 +75,7 @@
             </div>
             
             <p class="text-muted">
-              Last modified <strong id="lastmod-time">a moment ago</strong> by <strong id="lastmod-user">uknown</strong>.
+              Last modified <strong id="lastmod-time" class="timeago"></strong> by <strong id="lastmod-user">unknown</strong>.
               <a class="linkaction" id="restore">Restore Default Settings</a>.
             </p>
           </div>
@@ -87,6 +87,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/winchan.js"></script>
     <script src="js/jquery.cookie.js"></script>
+    <script src="js/jquery.timeago.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>
