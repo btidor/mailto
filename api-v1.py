@@ -150,9 +150,10 @@ def pobox_status(user):
     boxes = []
     for addresses, mtype in ((exchange, "EXCHANGE"), (imap, "IMAP"),
         (external, "SMTP")):
-        boxes.append({"address": address,
-                      "type": mtype,
-                      "enabled": address in moira_addresses})
+        for address in addresses:
+            boxes.append({"address": address,
+                          "type": mtype,
+                          "enabled": address in moira_addresses})
     isotime = datetime.strptime(boxinfo["modtime"], MOIRA_TIME_FORMAT) \
         .isoformat()
     return {"boxes": boxes,
