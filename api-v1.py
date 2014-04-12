@@ -49,19 +49,18 @@ from datetime import datetime
 
 APP_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-CN = "mailto-session" # name of the credentials cookie
 MN = "mailto" # this application's name, for Moira modwith
 
 
 @get("/<user>")
-@webathena(CN)
+@webathena
 @moira_auth(MN)
 @json_api
 def get_poboxes(user):
     return pobox_status(user)
 
 @put("/<user>/reset")
-@webathena(CN)
+@webathena
 @moira_auth(MN)
 @json_api
 def reset(user):
@@ -69,7 +68,7 @@ def reset(user):
     return pobox_status(user)
 
 @put("/<user>/<address>")
-@webathena(CN)
+@webathena
 @moira_auth(MN)
 @json_api
 def put_address(user, address):
@@ -78,7 +77,7 @@ def put_address(user, address):
     return pobox_status(user)
 
 @put("/<user>/<internal>/<external>")
-@webathena(CN)
+@webathena
 @moira_auth(MN)
 @json_api
 def put_split_addresses(user, internal, external):

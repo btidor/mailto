@@ -3,8 +3,6 @@
     var REALM = "ATHENA.MIT.EDU";
     var PRINCIPAL = [ "moira", "moira7.mit.edu" ];
 
-    var SESSION_COOKIE = "mailto-session";
-
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
@@ -21,8 +19,27 @@
     var externaladdr; // the external address, if any, or null
     var username; // of current user
 
-    // Automatically JSON-encode/decode objects into cookies
-    $.cookie.json = true;
+    /*
+     * Query the server.
+     *
+     * @param endpoint endpoint to call, e.g. "/user/reset"
+     * @param method method, "GET" or "PUT"
+     * @param callback function to call on success; passed the
+     *     JSON-decoded response as a single parameter
+     */
+    function apiquery( endpoint, method, callback ) {
+        $.ajax({
+            type: method,
+            url: "./api/v1/" + endpoint + "?webathena=" +
+                btoa( sessionStorage.getItem( "webathena" ) ),
+        }).done( function( response ) {
+            callback( JSON.parse( response ) );
+        }).fail( function ( jqXHR ) {
+            alert( "API Error", jqXHR.statusText, "danger" );
+            console.log( "Request to API failed:" );
+            console.log( jqXHR );
+        });
+    };        
 
     /*
      * Display a visual alert to the user.
@@ -149,8 +166,7 @@
      * @param session r.session returned by Webathena
      */
     function logmein( session ) {
-	username = session.cname.nameString[0];
-
+        username = session.cname.nameString[0];
 	// Dismiss earlier login errors
 	$( ".alert-login" ).alert( "close" );
 
@@ -162,17 +178,10 @@
 	$( "#login" ).text( LOGIN_ONGOING );
 
 	// Query to load results from API
-	$.ajax({
-	    type: "GET",
-	    url: "./api/v1/" + username,
-	}).done( function( response ) {
-	    updateui( JSON.parse(response) );
+        apiquery( username, "GET", function( response ) {
+            updateui( response );
 	    $( "#landing" ).addClass( "hidden" );
 	    $( "#app" ).removeClass( "hidden" );
-	}).fail( function ( jqXHR ) {
-	    alert( "API Error", jqXHR.statusText, "danger" );
-	    console.log( "Request to API failed:" );
-	    console.log( jqXHR );
 	});
     }
 
@@ -185,9 +194,9 @@
     login.text( LOGIN_ACTION );
     $( "#landing" ).removeClass( "hidden" );
 
-    var session = $.cookie( SESSION_COOKIE );
-    if ( session !== undefined ) {
-	console.log( "Loading session from cookie..." );
+    var session = JSON.parse( sessionStorage.getItem( "webathena" ) );
+    if ( session !== null ) {
+	console.log( "Loading session from storage..." );
 	logmein( session );
     }
 
@@ -240,9 +249,7 @@
 
             // Success! Put session information into a cookie and update UI
             console.log( "Login succeeded." );
-            $.cookie( SESSION_COOKIE , r.session, {
-                secure: true
-            });
+            sessionStorage.setItem( "webathena", JSON.stringify( r.session ) );
             logmein( r.session );
         });
     });
@@ -263,16 +270,7 @@
 
     $( "#restore-default" ).click( function( event ) {
         event.preventDefault();
-        $.ajax({
-            type: "PUT",
-            url: "./api/v1/" + username + "/reset",
-        }).done( function( response ) {
-            updateui( JSON.parse(response) );
-        }).fail( function ( jqXHR ) {
-            alert( "API Error", jqXHR.statusText, "danger" );
-            console.log( "Request to API failed:" );
-            console.log( jqXHR );
-        });
+        apiquery( username + "/reset", "PUT", updateui );
     });
 
     $( "#update-form" ).submit( function( event ) {
@@ -282,46 +280,17 @@
         if ( splitting )
             update = internaladdr + "/" + update
 
-        $.ajax({
-            type: "PUT",
-            url: "./api/v1/" + username + "/" + update,
-        }).done( function( response ) {
-            updateui( JSON.parse(response) );
-        }).fail( function ( jqXHR ) {
-            alert( "API Error", jqXHR.statusText, "danger" );
-            console.log( "Request to API failed:" );
-            console.log( jqXHR );
-        });
+        apiquery( username + "/" + update, "PUT", updateui );
     });
 
     var delExternal = function( event ) {
         event.preventDefault();
-
-        $.ajax({
-            type: "PUT",
-            url: "./api/v1/" + username + "/" + externaladdr,
-        }).done( function( response ) {
-            updateui( JSON.parse(response) );
-        }).fail( function ( jqXHR ) {
-            alert( "API Error", jqXHR.statusText, "danger" );
-            console.log( "Request to API failed:" );
-            console.log( jqXHR );
-        });
+        apiquery( username + "/" + externaladdr, "PUT", updateui );
     };
     $( "#exchange" ).find( ".del" ).click( delExternal );
     $( "#imap" ).find( ".del" ).click( delExternal );
     $( "#external" ).find( ".del" ).click( function( event ) {
         event.preventDefault();
-
-        $.ajax({
-            type: "PUT",
-            url: "./api/v1/" + username + "/" + internaladdr,
-        }).done( function( response ) {
-            updateui( JSON.parse(response) );
-        }).fail( function ( jqXHR ) {
-            alert( "API Error", jqXHR.statusText, "danger" );
-            console.log( "Request to API failed:" );
-            console.log( jqXHR );
-        });
+        apiquery( username + "/" + internaladdr, "PUT", updateui );
     });
 })();
