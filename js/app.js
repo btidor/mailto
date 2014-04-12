@@ -8,11 +8,15 @@
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
+    var SPLIT_TEXT_NO = "Instead";
+    var SPLIT_TEXT_YES = "In addition";
+
+    var SPLIT_TIP_ENABLED = "click to change option";
+    var SPLIT_TIP_DISABLED = "unfortunately, only one external forwarder is " +
+        "supported";
+
     // Automatically JSON-encode/decode objects into cookies
     $.cookie.json = true;
-
-    // Activate timeago plugin
-    $( ".timeago" ).timeago();
 
     /*
      * Display a visual alert to the user.
@@ -38,6 +42,31 @@
     }
 
     /*
+     * Helper function to show or hide the entry for a single mailbox.
+     */
+    function mailboxentry( selector, mailbox, split ) {
+        if ( mailbox == null ) {
+            $( selector ).hide();
+            return;
+        }
+
+        $( selector ).show();
+        $( selector ).find( ".fwdaddr" ).text( mailbox.address );
+        if ( split )
+            $( selector ).find( ".del" ).show();
+        else
+            $( selector ).find( ".del" ).hide();
+    }
+
+    /*
+     * Helper function to guess URL of email provider given an email address.
+     */
+    function guessprovider( address ) {
+        var suffix = address.split("@")[1];
+        return "https://www." + suffix + "/";
+    }
+
+    /*
      * Refresh the UI with a de-stringified (dictionary) response from the
      * server.
      */
@@ -50,6 +79,9 @@
         var imap = null;
         var smtp = null;
         for ( var i = 0; i < response.boxes.length; i++ ) {
+            if ( !response.boxes[i].enabled )
+                continue;
+
             if ( response.boxes[i].type == "EXCHANGE" )
                 exchange = response.boxes[i];
             else if ( response.boxes[i].type == "IMAP" )
@@ -58,69 +90,27 @@
                 smtp = response.boxes[i];
         }
 
-        var multiHosted = ( imap != null && exchange != null );
+        var split = ( smtp != null ) && ( ( exchange != null ) ||
+                                          ( imap != null ) );
 
-        if ( exchange == null ) {
-            $( "#exchange" ).addClass( "hidden" );
+        mailboxentry( "#exchange", exchange, split );
+        mailboxentry( "#imap", imap, split );
+        mailboxentry( "#external", smtp, split );
+
+        if ( smtp != null ) {
+            $( "#external-link" ).attr( "href", guessprovider(
+                smtp.address ) );
+            $( "#split-option" ).tooltip({ "title" : SPLIT_TIP_DISABLED });
         } else {
-            $( "#exchange" ).removeClass( "hidden" );
-            $( "#exchange-address" ).text( exchange.address );
-            if ( multiHosted ) {
-                if ( exchange.enabled ) {
-                    $( "#exchange-selected" ).removeClass( "hidden" );
-                    $( "#exchange-select" ).addClass( "hidden" );
-                } else {
-                    $( "#exchange-selected" ).addClass( "hidden" );
-                    $( "#exchange-select" ).removeClass( "hidden" );
-                }
-            } else {
-                $( "#exchange-selected" ).addClass( "hidden" );
-                $( "#exchange-select" ).addClass( "hidden" );
-            }
+            $( "#split-option" ).tooltip({ "title" : SPLIT_TEXT_ENABLED });
         }
 
-        if ( imap == null ) {
-            $( "#imap" ).addClass( "hidden" );
-        } else {
-            $( "#imap" ).removeClass( "hidden" );
-            $( "#imap-address" ).text( imap.address );
-            if ( multiHosted ) {
-                if ( imap.enabled ) {
-                    $( "#imap-selected" ).removeClass( "hidden" );
-                    $( "#imap-select" ).addClass( "hidden" );
-                } else {
-                    $( "#imap-selected" ).addClass( "hidden" );
-                    $( "#imap-select" ).removeClass( "hidden" );
-                }
-            } else {
-                $( "#imap-selected" ).addClass( "hidden" );
-                $( "#imap-select" ).addClass( "hidden" );
-            }
-        }
+        $( "#split-option" ).text( SPLIT_TEXT_NO );
 
-        if ( ( exchange == null || !exchange.enabled ) &&
-             ( imap == null || !imap.enabled ) ) {
-            $( "#hosted-toggle" ).text( "Enable" );
-            $( "#hosted-panel" ).addClass( "panel-disabled" );
-        } else {
-            $( "#hosted-toggle" ).text( "Disable" );
-            $( "#hosted-panel" ).removeClass( "panel-disabled" );
-        }
-
-        if ( smtp == null ) {
-            $( "#external-toggle" ).text( "Enable" );
-            $( "#external-panel" ).addClass( "panel-disabled" );
-            $( "#external" ).addClass( "hidden" );
-        } else {
-            $( "#external-toggle" ).text( "Disable" );
-            $( "#external-panel" ).removeClass( "panel-disabled" );
-            $( "#external" ).removeClass( "hidden" );
-            $( "#external-prefix" ).text( smtp.address.split( "@" )[0] );
-            $( "#external-domain" ).text( "@" + smtp.address.split( "@" )[1] );
-        }
-        console.log( "Exchange: " + exchange );
-        console.log( "IMAP: " + imap );
-        console.log( "SMTP: " + smtp );
+        if (split) {
+            $( "#editor" ).hide();
+        } else
+            $( "#editor" ).show();
     }
 
     /*
@@ -134,23 +124,21 @@
 	// Dismiss earlier login errors
 	$( ".alert-login" ).alert( "close" );
 
-	// Put username into relevant divs
-	$( ".username" ).text( username );
-
-	// Hide previous view, show next view
-	$( "#landing" ).addClass( "hidden" );
-	$( "#app" ).removeClass( "hidden" );
+	// Put email address into relevant divs
+	$( ".thisuser" ).text( username + "@mit.edu" );
 
 	// Disable login button, just in case
 	$( "#login" ).attr( "disabled", true);
 	$( "#login" ).text( LOGIN_ONGOING );
-	
+
 	// Query to load results from API
 	$.ajax({
 	    type: "GET",
 	    url: "./api/v1/" + username,
 	}).done( function( response ) {
 	    updateui( JSON.parse(response) );
+	    $( "#landing" ).addClass( "hidden" );
+	    $( "#app" ).removeClass( "hidden" );
 	}).fail( function ( jqXHR ) {
 	    alert( "API Error", jqXHR.statusText, "danger" );
 	    console.log( "Request to API failed:" );
@@ -159,6 +147,8 @@
     }
 
     /* Reset Page on Load */
+    $( ".timeago" ).timeago();
+
     var login = $( "#login" );
     login.attr( "disabled", false );
     login.text( LOGIN_ACTION );

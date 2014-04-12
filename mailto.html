@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Email Forwarding</title>
+    <title>Mail Forwarding</title>
 
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
@@ -15,7 +15,7 @@
       <div class="row">
         <div class="col-md-6 col-md-offset-3">
           <div class="page-header">
-            <h1>Email Forwarding</h1>
+            <h1>Mail Forwarding</h1>
             <!-- Image Credit: http://www.iconspedia.com/icon/airmail-circle-icon-42962.html -->
           </div>
 
@@ -40,43 +40,38 @@
           </form>
 
           <div id="app" class="hidden">
-            <h4><small>Logged in as <strong><span class="username">unknown</span>@mit.edu</strong></small></h4>
             <div class="panel panel-default">
-              <div class="panel-body" id="hosted-panel">
-                <h5><strong>Hosted Email</strong> &ndash; <a id="hosted-toggle">Disable</a></h5>
-                <table class="table">
-                  <tr id="exchange" id="exchange">
-                    <td>
-                      <a href="https://owa.exchange.mit.edu/owa/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">Exchange</span></a>
-                      <span class="host-address text-muted" id="exchange-address">unknown@exchange.mit.edu</span>
-                    </td>
-                    <td class="action"><span class="text-muted hidden" id="exchange-selected">Selected</span><a class="hidden" id="exchange-select">Switch</a></td>
-                  </tr>
-                  <tr id="imap">
-                    <td>
-                      <a href="https://webmail.mit.edu/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">IMAP</span></a>
-                      <span class="host-address text-muted" id="imap-address">unknown@po12.mit.edu</span>
-                    </td>
-                    <td class="action"><span class="text-muted hidden" id="imap-selected">Selected</span><a class="hidden" id="imap-select">Switch</a></td>
-                  </tr>
-                </table>
+              <div class="panel-body">
+                <p>Mail sent to <span class="email thisuser">unknown@mit.edu</span> will be delivered to:</p>
+                <p id="exchange">
+                  <a href="https://owa.exchange.mit.edu/owa/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">Exchange</span></a>
+                  <span class="email fwdaddr"></span>
+                  <span class="glyphicon glyphicon-remove-circle del"></span>
+                </p>
+                <p id="imap">
+                  <a href="https://webmail.mit.edu/" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">IMAP</span></a>
+                  <span class="email fwdaddr"></span>
+                  <span class="glyphicon glyphicon-remove-circle del"></span>
+                </p>
+                <p id="external">
+                  <a id="external-link" href="" target="_blank"><span class="glyphicon glyphicon-send"></span><span class="host">External</span></a>
+                  <span class="email fwdaddr"></span>
+                  <span class="glyphicon glyphicon-remove-circle del"></span>
+                </p>
+
+                <div id="editor">
+                  <hr>
+
+                  <p><a id="split-option" href="#">Instead</a>, forward mail to:</p>
+                  <input type="email" id="new-address" class="email" placeholder="you@yourmail.com" />
+                  <button type="button" id="update-address" class="btn btn-primary">Update</button>
+                </div>
               </div>
             </div>
-            <div class="panel panel-default">
-              <div class="panel-body" id="external-panel">
-                <h5><strong>External Forwarding</strong> &ndash; <a id="external-toggle">Disable</a></h5>
-                <table class="table" id="external">
-                  <tr>
-                    <td><a href="https://www.gmail.com/" target="_blank" id="external-link"><span class="glyphicon glyphicon-send"></span></a><span id="external-prefix">jack.florey</span><strong id="external-domain">@gmail.com</strong></td>
-                    <td class="action"><a id="external-edit">Edit</a></td>
-                  </tr>
-                </table>
-              </div>
-            </div>
-            
+
             <p class="text-muted">
-              Last modified <strong id="lastmod-time" class="timeago"></strong> by <strong id="lastmod-user">unknown</strong>.
-              <a class="linkaction" id="restore">Restore Default Settings</a>.
+              Last modified <strong>a moment ago</strong> by <strong>florey</strong>.
+              <a id="restore-default" href="#">Restore Default Settings</a>.
             </p>
           </div>
         </div>
