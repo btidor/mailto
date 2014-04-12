@@ -15,6 +15,12 @@
     var SPLIT_TIP_DISABLED = "unfortunately, only one external forwarder is " +
         "supported";
 
+    var splitting; // false if address should replace previous
+    var splittable; // if another external address can be added
+    var internaladdr; // the internal address, if any, or null
+    var externaladdr; // the external address, if any, or null
+    var username; // of current user
+
     // Automatically JSON-encode/decode objects into cookies
     $.cookie.json = true;
 
@@ -43,6 +49,10 @@
 
     /*
      * Helper function to show or hide the entry for a single mailbox.
+     *
+     * @param selector jQuery selector for the mailbox's line
+     * @param mailbox object describing mailbox, from server response
+     * @param split true iff mail is being split
      */
     function mailboxentry( selector, mailbox, split ) {
         if ( mailbox == null ) {
@@ -60,6 +70,8 @@
 
     /*
      * Helper function to guess URL of email provider given an email address.
+     *
+     * @param address address to examine
      */
     function guessprovider( address ) {
         var suffix = address.split("@")[1];
@@ -69,6 +81,8 @@
     /*
      * Refresh the UI with a de-stringified (dictionary) response from the
      * server.
+     *
+     * @param response data from server
      */
     function updateui( response ) {
 	console.log( response );
@@ -90,27 +104,43 @@
                 smtp = response.boxes[i];
         }
 
-        var split = ( smtp != null ) && ( ( exchange != null ) ||
-                                          ( imap != null ) );
+        internaladdr = null;
+        if ( exchange != null )
+            internaladdr = exchange.address;
+        else if ( imap != null )
+            internaladdr = imap.address;
+
+        externaladdr = null;
+        if ( smtp != null)
+            externaladdr = smtp.address;
+
+        var split = ( smtp != null ) && ( internaladdr != null );
 
         mailboxentry( "#exchange", exchange, split );
         mailboxentry( "#imap", imap, split );
         mailboxentry( "#external", smtp, split );
 
+        $( "#split-option" ).text( SPLIT_TEXT_NO );
+        splitting = false;
+
         if ( smtp != null ) {
             $( "#external-link" ).attr( "href", guessprovider(
                 smtp.address ) );
-            $( "#split-option" ).tooltip({ "title" : SPLIT_TIP_DISABLED });
+            $( "#split-option" ).data("bs.tooltip").options.title =
+                SPLIT_TIP_DISABLED;
+            splittable = false;
         } else {
-            $( "#split-option" ).tooltip({ "title" : SPLIT_TEXT_ENABLED });
+            $( "#split-option" ).data("bs.tooltip").options.title =
+                SPLIT_TIP_ENABLED;
+            splittable = true;
         }
 
-        $( "#split-option" ).text( SPLIT_TEXT_NO );
-
-        if (split) {
+        if (split)
             $( "#editor" ).hide();
-        } else
+        else
             $( "#editor" ).show();
+
+        $( "#new-address" ).val("");
     }
 
     /*
@@ -119,7 +149,7 @@
      * @param session r.session returned by Webathena
      */
     function logmein( session ) {
-	var username = session.cname.nameString[0];
+	username = session.cname.nameString[0];
 
 	// Dismiss earlier login errors
 	$( ".alert-login" ).alert( "close" );
@@ -148,6 +178,7 @@
 
     /* Reset Page on Load */
     $( ".timeago" ).timeago();
+    $( "#split-option" ).tooltip();
 
     var login = $( "#login" );
     login.attr( "disabled", false );
@@ -161,7 +192,7 @@
     }
 
     /* Button Handlers */
-    login.click(function( event ) {
+    login.click( function( event ) {
         event.preventDefault();
 	login.attr( "disabled", true );
         login.text( LOGIN_ONGOING );
@@ -213,6 +244,84 @@
                 secure: true
             });
             logmein( r.session );
+        });
+    });
+
+    $( "#split-option" ).click( function( event ) {
+        event.preventDefault();
+        if ( !splittable )
+            return;
+
+        if ( splitting ) {
+            $( "#split-option" ).text( SPLIT_TEXT_NO );
+            splitting = false;
+        } else {
+            $( "#split-option" ).text( SPLIT_TEXT_YES );
+            splitting = true;
+        }
+    });
+
+    $( "#restore-default" ).click( function( event ) {
+        event.preventDefault();
+        $.ajax({
+            type: "PUT",
+            url: "./api/v1/" + username + "/reset",
+        }).done( function( response ) {
+            updateui( JSON.parse(response) );
+        }).fail( function ( jqXHR ) {
+            alert( "API Error", jqXHR.statusText, "danger" );
+            console.log( "Request to API failed:" );
+            console.log( jqXHR );
+        });
+    });
+
+    $( "#update-form" ).submit( function( event ) {
+        event.preventDefault();
+        
+        var update = $( "#new-address" ).val();
+        if ( splitting )
+            update = internaladdr + "/" + update
+
+        $.ajax({
+            type: "PUT",
+            url: "./api/v1/" + username + "/" + update,
+        }).done( function( response ) {
+            updateui( JSON.parse(response) );
+        }).fail( function ( jqXHR ) {
+            alert( "API Error", jqXHR.statusText, "danger" );
+            console.log( "Request to API failed:" );
+            console.log( jqXHR );
+        });
+    });
+
+    var delExternal = function( event ) {
+        event.preventDefault();
+
+        $.ajax({
+            type: "PUT",
+            url: "./api/v1/" + username + "/" + externaladdr,
+        }).done( function( response ) {
+            updateui( JSON.parse(response) );
+        }).fail( function ( jqXHR ) {
+            alert( "API Error", jqXHR.statusText, "danger" );
+            console.log( "Request to API failed:" );
+            console.log( jqXHR );
+        });
+    };
+    $( "#exchange" ).find( ".del" ).click( delExternal );
+    $( "#imap" ).find( ".del" ).click( delExternal );
+    $( "#external" ).find( ".del" ).click( function( event ) {
+        event.preventDefault();
+
+        $.ajax({
+            type: "PUT",
+            url: "./api/v1/" + username + "/" + internaladdr,
+        }).done( function( response ) {
+            updateui( JSON.parse(response) );
+        }).fail( function ( jqXHR ) {
+            alert( "API Error", jqXHR.statusText, "danger" );
+            console.log( "Request to API failed:" );
+            console.log( jqXHR );
         });
     });
 })();
