@@ -33,13 +33,14 @@
      *     JSON-decoded response as a single parameter
      */
     function apiQuery( endpoint, method, callback ) {
-        console.log( "Query to: " + endpoint );
+        $( "#loader" ).removeClass( "hidden" );
         $.ajax({
             type: method,
             url: "./api/v1/" + endpoint + "?webathena=" +
                 btoa( sessionStorage.getItem( TICKET_LABEL ) ),
         }).done( function( response ) {
             callback( JSON.parse( response ) );
+            $( "#loader" ).addClass( "hidden" );
         }).fail( function ( jqXHR ) {
             alert( "API Error", jqXHR.statusText, "danger" );
             console.log( "Request to API failed:" );

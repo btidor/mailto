@@ -18,6 +18,10 @@
   margin-top: 3em;
 }
 
+#loader {
+  float: right;
+}
+
 .email {
   font-weight: bold;
   color: #555;
