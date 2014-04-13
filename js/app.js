@@ -9,13 +9,16 @@
     var OPTION_SPLIT = "In addition";
     var OPTION_REPLACE = "Instead";
     var OPTION_REPLACE_MULTIPLE = "Instead of ";
-    
+
+    // Object representing Webathena session
+    var session;
+
     // Currently logged-in user. (string)
     var username;
-    
+
     // Ordered list of enabled mailboxes. (list of objects)
     var mailboxes;
-    
+
     // Index of mailbox to replace, or -1 to split. (integer)
     var boxToReplace;
 
@@ -27,7 +30,7 @@
      * @param callback function to call on success; passed the
      *     JSON-decoded response as a single parameter
      */
-    function apiquery( endpoint, method, callback ) {
+    function apiQuery( endpoint, method, callback ) {
         console.log( "Query to: " + endpoint );
         $.ajax({
             type: method,
@@ -40,7 +43,7 @@
             console.log( "Request to API failed:" );
             console.log( jqXHR );
         });
-    };        
+    };
 
     /*
      * Display a visual alert to the user.
@@ -64,7 +67,7 @@
         element.removeClass( "hidden" );
         $( "#alert" ).after( element );
     }
-    
+
     /*
      * Update the UI element displaying the "Instead"/"In addition" message.
      */
@@ -88,20 +91,22 @@
      *
      * @param selector jQuery selector for the mailbox's line
      * @param mailbox object describing mailbox, from server response
-     * @param split true iff mail is being split
      */
-    function mailboxentry( selector, mailbox, split ) {
-        if ( mailbox == null ) {
+    function updateMailboxUI( selector, mailbox ) {
+        if ( mailbox == null ) {    // mailbox is hidden
             $( selector ).hide();
             return;
         }
 
+        // otherwise, show mailbox
         $( selector ).show();
         $( selector ).find( ".fwdaddr" ).text( mailbox.address );
-        if ( split )
-            $( selector ).find( ".del" ).show();
-        else
+
+        // only show delete button if multiple mailboxes in use
+        if ( mailboxes.length == 1 )
             $( selector ).find( ".del" ).hide();
+        else
+            $( selector ).find( ".del" ).show();
     }
 
     /*
@@ -118,22 +123,21 @@
      * Refresh the UI with a de-stringified (dictionary) response from the
      * server.
      *
-     * @param response data from server
+     * @param response JSON data from server
      */
-    function updateui( response ) {
-        console.log( response );
+    function updateUI( response ) {
         // update lastmod UI elements
         $( "#lastmod-time" ).timeago( "update", response.modtime );
         $( "#lastmod-user" ).text( response.modby );
 
-        // extract three mailboxes from response data
+        // extract three mailboxe types from response
         var exchange = null;
         var imap = null;
         var smtp = null;
         for ( var i = 0; i < response.boxes.length; i++ ) {
             if ( !response.boxes[i].enabled )
                 continue;
-            
+
             if ( response.boxes[i].type == "EXCHANGE" )
                 exchange = response.boxes[i];
             else if ( response.boxes[i].type == "IMAP" )
@@ -141,8 +145,8 @@
             else if ( response.boxes[i].type == "SMTP" )
                 smtp = response.boxes[i];
         }
-        
-        // populate global list of mailboxes, in fixed order
+
+        // populate global list of mailboxes, in same order as UI list
         mailboxes = new Array();
         for ( var i = 0; i < response.boxes.length; i++ ) {
             if ( response.boxes[i].enabled == false )    continue;
@@ -163,12 +167,12 @@
         // determine if split mailboxes are in use
         var split = ( mailboxes.length > 1 );
 
-        // update UI to display or hide three mailboxes
-        mailboxentry( "#exchange", exchange, split );
-        mailboxentry( "#imap", imap, split );
-        mailboxentry( "#external", smtp, split );
+        // update UI to display or hide each kind of mailbox
+        updateMailboxUI( "#exchange", exchange );
+        updateMailboxUI( "#imap", imap );
+        updateMailboxUI( "#external", smtp );
 
-        // initialize splitting UI
+        // initialize split/replace UI
         boxToReplace = 0;
         updateSplitUI();
 
@@ -182,25 +186,25 @@
      */
     function logmein( session ) {
         username = session.cname.nameString[0];
-	// Dismiss earlier login errors
-	$( ".alert-login" ).alert( "close" );
+        // Dismiss earlier login errors
+        $( ".alert-login" ).alert( "close" );
 
-	// Put email address into relevant divs
-	$( ".thisuser" ).text( username + "@mit.edu" );
+        // Put email address into relevant divs
+        $( ".thisuser" ).text( username + "@mit.edu" );
 
-	// Disable login button, just in case
-	$( "#login" ).attr( "disabled", true);
-	$( "#login" ).text( LOGIN_ONGOING );
+        // Disable login button, just in case
+        $( "#login" ).attr( "disabled", true);
+        $( "#login" ).text( LOGIN_ONGOING );
 
-	// Query to load results from API
-        apiquery( username, "GET", function( response ) {
-            updateui( response );
-	    $( "#landing" ).addClass( "hidden" );
-	    $( "#app" ).removeClass( "hidden" );
-	});
+        // Query to load results from API
+            apiQuery( username, "GET", function( response ) {
+                updateUI( response );
+                $( "#landing" ).addClass( "hidden" );
+                $( "#app" ).removeClass( "hidden" );
+        });
     }
 
-    /* Reset Page on Load */
+    /* On Load: Initialize Page */
     $( ".timeago" ).timeago();
     $( "#split-option" ).tooltip();
 
@@ -209,10 +213,10 @@
     login.text( LOGIN_ACTION );
     $( "#landing" ).removeClass( "hidden" );
 
-    var session = JSON.parse( sessionStorage.getItem( "webathena" ) );
+    session = JSON.parse( sessionStorage.getItem( "webathena" ) );
     if ( session !== null ) {
-	console.log( "Loading session from storage..." );
-	logmein( session );
+        console.log( "Loading session from storage..." );
+        logmein( session );
     }
 
     /* Button Handlers */
@@ -271,78 +275,62 @@
 
     $( "#split-option" ).click( function( event ) {
         event.preventDefault();
-        
+
         boxToReplace++;
         if ( boxToReplace >= mailboxes.length )
             if ( mailboxes.length == 1 )    // only one forwarder
-                boxToReplace = -1;          // go back to "in addition"
+                boxToReplace = -1;          // go back to split
             else                    // multiple forwarders
-                boxToReplace = 0;   // only cycle through "instead"s
-        
+                boxToReplace = 0;   // only cycle through replacements
+
         updateSplitUI();
     });
 
     $( "#restore-default" ).click( function( event ) {
         event.preventDefault();
-        apiquery( username + "/reset", "PUT", updateui );
+        apiQuery( username + "/reset", "PUT", updateUI );
     });
 
     $( "#update-form" ).submit( function( event ) {
         event.preventDefault();
-        
+
         var newAddress = $( "#new-address" ).val();
         usedAddress = false;
-        
+
         var query = username + "/";
-        
+
         if ( newAddress.match(/@EXCHANGE\.MIT\.EDU$/i) ||
              newAddress.match(/@PO.*\.MIT\.EDU$/i) ) {
             query += newAddress + "/";
             usedAddress = true;
         }
-        
+
         for ( var i = 0; i < mailboxes.length; i++ ) {
             if ( i != boxToReplace )
                 query += mailboxes[i].address + "/";
         }
-        
+
         if ( !usedAddress )
             query += newAddress + "/";
         query = query.substring( 0, query.length - 1 ); // trim trailing slash
-        apiquery( query, "PUT", updateui );
+        apiQuery( query, "PUT", updateUI );
     });
-    
-    $( "#exchange" ).find( ".del" ).click( function( event ) {
-        event.preventDefault();
-        
-        var addr = "";
-        for ( var i = 0; i < mailboxes.length; i++ )
-            if ( mailboxes[i].type != "EXCHANGE" ) {
-                apiquery( username + "/" + mailboxes[i].address,
-                    "PUT", updateui );
-                return
-            }
-    });
-    $( "#imap" ).find( ".del" ).click( function( event ) {
-        event.preventDefault();
-        
-        var addr = "";
-        for ( var i = 0; i < mailboxes.length; i++ )
-            if ( mailboxes[i].type != "IMAP" ) {
-                apiquery( username + "/" + mailboxes[i].address,
-                    "PUT", updateui );
-                return
-            }
-    });
-    $( "#exernal" ).find( ".del" ).click( function( event ) {
-        event.preventDefault();
-        
-        var addr = "";
-        for ( var i = 0; i < mailboxes.length; i++ )
-            if ( mailboxes[i].type != "SMTP" ) {
-                apiquery( username + "/" + mailboxes[i].address,
-                    "PUT", updateui );
-                return
-            }
-    });
+
+    var del = function( type ) {
+        return function( event ) {
+            event.preventDefault();
+
+            var addr = "";
+            for ( var i = 0; i < mailboxes.length; i++ )
+                if ( mailboxes[i].type != "EXCHANGE" ) {
+                    apiQuery( username + "/" + mailboxes[i].address,
+                        "PUT", updateUI );
+                    return
+                }
+        };
+    }
+
+    $( "#exchange" ).find( ".del" ).click( del( "EXCHANGE" ) );
+    $( "#imap" ).find( ".del" ).click( del( "IMAP" ) );
+    $( "#exernal" ).find( ".del" ).click( del( "SMTP" ) );
 })();
