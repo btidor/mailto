@@ -48,12 +48,15 @@
   color: #bbb;
 }
 
-input {
+form#update-form {
+  text-align: center;
+}
+
+input#new-address {
   border: none;
   border-bottom: 1px solid #999;
 
   padding: 3px;
-  margin-left: 15px;
   margin-right: 15px;
 
   width: 75%;
