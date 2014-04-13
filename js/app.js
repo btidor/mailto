@@ -6,18 +6,18 @@
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
-    var SPLIT_TEXT_NO = "Instead";
-    var SPLIT_TEXT_YES = "In addition";
-
-    var SPLIT_TIP_ENABLED = "click to change option";
-    var SPLIT_TIP_DISABLED = "unfortunately, only one external forwarder is " +
-        "supported";
-
-    var splitting; // false if address should replace previous
-    var splittable; // if another external address can be added
-    var internaladdr; // the internal address, if any, or null
-    var externaladdr; // the external address, if any, or null
-    var username; // of current user
+    var OPTION_SPLIT = "In addition";
+    var OPTION_REPLACE = "Instead";
+    var OPTION_REPLACE_MULTIPLE = "Instead of ";
+    
+    // Currently logged-in user. (string)
+    var username;
+    
+    // Ordered list of enabled mailboxes. (list of objects)
+    var mailboxes;
+    
+    // Index of mailbox to replace, or -1 to split. (integer)
+    var boxToReplace;
 
     /*
      * Query the server.
@@ -28,6 +28,7 @@
      *     JSON-decoded response as a single parameter
      */
     function apiquery( endpoint, method, callback ) {
+        console.log( "Query to: " + endpoint );
         $.ajax({
             type: method,
             url: "./api/v1/" + endpoint + "?webathena=" +
@@ -58,10 +59,28 @@
         element.find( ".error-title" ).text( title );
         element.find( ".error-text" ).text( message );
 
-	if ( typeof( tag ) !== "undefined" ) element.addClass( tag );
+        if ( typeof( tag ) !== "undefined" ) element.addClass( tag );
         element.addClass( "alert-" + type );
         element.removeClass( "hidden" );
         $( "#alert" ).after( element );
+    }
+    
+    /*
+     * Update the UI element displaying the "Instead"/"In addition" message.
+     */
+    function updateSplitUI() {
+        if ( boxToReplace == -1 )
+            $( "#split-option" ).text( OPTION_SPLIT );
+        else if ( mailboxes.length == 1 )
+            $( "#split-option" ).text( OPTION_REPLACE );
+        else {
+            var humanTypes = { "EXCHANGE" : "Exchange",
+                               "IMAP" : "IMAP",
+                               "SMTP" : "External" }
+            var type = mailboxes[ boxToReplace ].type;
+            $( "#split-option" ).text( OPTION_REPLACE_MULTIPLE +
+                humanTypes[ type ] );
+        }
     }
 
     /*
@@ -102,17 +121,19 @@
      * @param response data from server
      */
     function updateui( response ) {
-	console.log( response );
+        console.log( response );
+        // update lastmod UI elements
         $( "#lastmod-time" ).timeago( "update", response.modtime );
         $( "#lastmod-user" ).text( response.modby );
 
+        // extract three mailboxes from response data
         var exchange = null;
         var imap = null;
         var smtp = null;
         for ( var i = 0; i < response.boxes.length; i++ ) {
             if ( !response.boxes[i].enabled )
                 continue;
-
+            
             if ( response.boxes[i].type == "EXCHANGE" )
                 exchange = response.boxes[i];
             else if ( response.boxes[i].type == "IMAP" )
@@ -120,42 +141,36 @@
             else if ( response.boxes[i].type == "SMTP" )
                 smtp = response.boxes[i];
         }
+        
+        // populate global list of mailboxes, in fixed order
+        mailboxes = new Array();
+        for ( var i = 0; i < response.boxes.length; i++ ) {
+            if ( response.boxes[i].enabled == false )    continue;
+            if ( response.boxes[i].type == "EXCHANGE" )
+                mailboxes = mailboxes.concat( [ response.boxes[i] ] );
+        }
+        for ( var i = 0; i < response.boxes.length; i++ ) {
+            if ( response.boxes[i].enabled == false )    continue;
+            if ( response.boxes[i].type == "IMAP" )
+                mailboxes = mailboxes.concat( [ response.boxes[i] ] );
+        }
+        for ( var i = 0; i < response.boxes.length; i++ ) {
+            if ( response.boxes[i].enabled == false )    continue;
+            if ( response.boxes[i].type == "SMTP" )
+                mailboxes = mailboxes.concat( [ response.boxes[i] ] );
+        }
 
-        internaladdr = null;
-        if ( exchange != null )
-            internaladdr = exchange.address;
-        else if ( imap != null )
-            internaladdr = imap.address;
+        // determine if split mailboxes are in use
+        var split = ( mailboxes.length > 1 );
 
-        externaladdr = null;
-        if ( smtp != null)
-            externaladdr = smtp.address;
-
-        var split = ( smtp != null ) && ( internaladdr != null );
-
+        // update UI to display or hide three mailboxes
         mailboxentry( "#exchange", exchange, split );
         mailboxentry( "#imap", imap, split );
         mailboxentry( "#external", smtp, split );
 
-        $( "#split-option" ).text( SPLIT_TEXT_NO );
-        splitting = false;
-
-        if ( smtp != null ) {
-            $( "#external-link" ).attr( "href", guessprovider(
-                smtp.address ) );
-            $( "#split-option" ).data("bs.tooltip").options.title =
-                SPLIT_TIP_DISABLED;
-            splittable = false;
-        } else {
-            $( "#split-option" ).data("bs.tooltip").options.title =
-                SPLIT_TIP_ENABLED;
-            splittable = true;
-        }
-
-        if (split)
-            $( "#editor" ).hide();
-        else
-            $( "#editor" ).show();
+        // initialize splitting UI
+        boxToReplace = 0;
+        updateSplitUI();
 
         $( "#new-address" ).val("");
     }
@@ -256,16 +271,15 @@
 
     $( "#split-option" ).click( function( event ) {
         event.preventDefault();
-        if ( !splittable )
-            return;
-
-        if ( splitting ) {
-            $( "#split-option" ).text( SPLIT_TEXT_NO );
-            splitting = false;
-        } else {
-            $( "#split-option" ).text( SPLIT_TEXT_YES );
-            splitting = true;
-        }
+        
+        boxToReplace++;
+        if ( boxToReplace >= mailboxes.length )
+            if ( mailboxes.length == 1 )    // only one forwarder
+                boxToReplace = -1;          // go back to "in addition"
+            else                    // multiple forwarders
+                boxToReplace = 0;   // only cycle through "instead"s
+        
+        updateSplitUI();
     });
 
     $( "#restore-default" ).click( function( event ) {
@@ -276,21 +290,59 @@
     $( "#update-form" ).submit( function( event ) {
         event.preventDefault();
         
-        var update = $( "#new-address" ).val();
-        if ( splitting )
-            update = internaladdr + "/" + update
-
-        apiquery( username + "/" + update, "PUT", updateui );
+        var newAddress = $( "#new-address" ).val();
+        usedAddress = false;
+        
+        var query = username + "/";
+        
+        if ( newAddress.match(/@EXCHANGE\.MIT\.EDU$/i) ||
+             newAddress.match(/@PO.*\.MIT\.EDU$/i) ) {
+            query += newAddress + "/";
+            usedAddress = true;
+        }
+        
+        for ( var i = 0; i < mailboxes.length; i++ ) {
+            if ( i != boxToReplace )
+                query += mailboxes[i].address + "/";
+        }
+        
+        if ( !usedAddress )
+            query += newAddress + "/";
+        query = query.substring( 0, query.length - 1 ); // trim trailing slash
+        apiquery( query, "PUT", updateui );
     });
-
-    var delExternal = function( event ) {
+    
+    $( "#exchange" ).find( ".del" ).click( function( event ) {
         event.preventDefault();
-        apiquery( username + "/" + externaladdr, "PUT", updateui );
-    };
-    $( "#exchange" ).find( ".del" ).click( delExternal );
-    $( "#imap" ).find( ".del" ).click( delExternal );
-    $( "#external" ).find( ".del" ).click( function( event ) {
+        
+        var addr = "";
+        for ( var i = 0; i < mailboxes.length; i++ )
+            if ( mailboxes[i].type != "EXCHANGE" ) {
+                apiquery( username + "/" + mailboxes[i].address,
+                    "PUT", updateui );
+                return
+            }
+    });
+    $( "#imap" ).find( ".del" ).click( function( event ) {
         event.preventDefault();
-        apiquery( username + "/" + internaladdr, "PUT", updateui );
+        
+        var addr = "";
+        for ( var i = 0; i < mailboxes.length; i++ )
+            if ( mailboxes[i].type != "IMAP" ) {
+                apiquery( username + "/" + mailboxes[i].address,
+                    "PUT", updateui );
+                return
+            }
+    });
+    $( "#exernal" ).find( ".del" ).click( function( event ) {
+        event.preventDefault();
+        
+        var addr = "";
+        for ( var i = 0; i < mailboxes.length; i++ )
+            if ( mailboxes[i].type != "SMTP" ) {
+                apiquery( username + "/" + mailboxes[i].address,
+                    "PUT", updateui );
+                return
+            }
     });
 })();
