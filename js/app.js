@@ -87,7 +87,7 @@
     }
 
     /*
-     * Helper function to show or hide the entry for a single mailbox.
+     * Show or hide the entry for a single mailbox.
      *
      * @param selector jQuery selector for the mailbox's line
      * @param mailbox object describing mailbox, from server response
@@ -110,11 +110,12 @@
     }
 
     /*
-     * Helper function to guess URL of email provider given an email address.
+     * Guess URL of email provider given an email address.
      *
      * @param address address to examine
+     * @return hypothesized URL of service provider's login page
      */
-    function guessprovider( address ) {
+    function guessProvider( address ) {
         var suffix = address.split("@")[1];
         return "https://www." + suffix + "/";
     }
@@ -184,7 +185,7 @@
      *
      * @param session r.session returned by Webathena
      */
-    function logmein( session ) {
+    function logMeIn( session ) {
         username = session.cname.nameString[0];
         // Dismiss earlier login errors
         $( ".alert-login" ).alert( "close" );
@@ -216,7 +217,7 @@
     session = JSON.parse( sessionStorage.getItem( "webathena" ) );
     if ( session !== null ) {
         console.log( "Loading session from storage..." );
-        logmein( session );
+        logMeIn( session );
     }
 
     /* Button Handlers */
@@ -269,7 +270,7 @@
             // Success! Put session information into a cookie and update UI
             console.log( "Login succeeded." );
             sessionStorage.setItem( "webathena", JSON.stringify( r.session ) );
-            logmein( r.session );
+            logMeIn( r.session );
         });
     });
 
