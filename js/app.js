@@ -52,15 +52,21 @@
      * @param message the message to display; text only
      * @param type one of "danger", "warning", "info", "success"; controls the
      *        color of the alert
-     * @param an optional tag, added as a class, to allow for batch dismissal
-     *        via $( ".tag" ).alert( "close" );
+     * @param tag an optional tag, added as a class, to allow for batch
+     *        dismissal via $( ".tag" ).alert( "close" );
+     * @param unescaped optional, set to true to allow HTML content
      */
-    function alert( title, message, type, tag ) {
+    function alert( title, message, type, tag, unescaped ) {
         var element = $( "#alert" ).clone();
 
         element.prop( "id", "" );
-        element.find( ".error-title" ).text( title );
-        element.find( ".error-text" ).text( message );
+        if ( unescaped ) {
+            element.find( ".error-title" ).html( title );
+            element.find( ".error-text" ).html( message );
+        } else {
+            element.find( ".error-title" ).text( title );
+            element.find( ".error-text" ).text( message );
+        }
 
         if ( typeof( tag ) !== "undefined" ) element.addClass( tag );
         element.addClass( "alert-" + type );
@@ -107,6 +113,11 @@
             $( selector ).find( ".del" ).hide();
         else
             $( selector ).find( ".del" ).show();
+
+        // handle SMTP mailboxes
+        if ( selector == "#smtp" )
+            $( "#smtp-link" ).attr( "href", guessProvider( mailbox.address ) );
+
     }
 
     /*
@@ -118,6 +129,20 @@
     function guessProvider( address ) {
         var suffix = address.split("@")[1];
         return "https://www." + suffix + "/";
+    }
+
+    /*
+     * Categorize a mailbox by address.
+     *
+     * @param address address to examine
+     * @return one of "EXCHANGE", "IMAP", "SMTP"
+     */
+    function categorize( address ) {
+        if ( address.match(/@EXCHANGE\.MIT\.EDU$/i) )
+            return "EXCHANGE";
+        if ( address.match(/@PO\d+\.MIT\.EDU$/i) )
+            return "IMAP";
+        return "SMTP";
     }
 
     /*
@@ -296,24 +321,45 @@
         event.preventDefault();
 
         var newAddress = $( "#new-address" ).val();
-        usedAddress = false;
+
+        var internal = null;
+        var external = null;
+        for ( var i = 0; i < mailboxes.length; i++ )
+            if ( i != boxToReplace ) {
+                if ( mailboxes[i].type == "SMTP")
+                    external = mailboxes[i].address;
+                else
+                    internal = mailboxes[i].address;
+            }
+
+        if ( categorize( newAddress ) == "SMTP" ) {
+            if ( external != null ) {
+                alert( "Sorry!",
+                       "You can only have one external forwarder. To send " +
+                       "mail to multiple external addresses, please " +
+                       "<a href=\"https://listmaker.mit.edu/\" " +
+                       "target=\"_blank\">create a Moira list</a>.",
+                       "warning", "alert-update", true );
+                return;
+            }
+            external = newAddress;
+        } else {
+            if ( internal != null ) {
+                alert( "Sorry!",
+                       "You can only have one internal mailbox.",
+                       "warning", "alert-update" );
+                return;
+            }
+            internal = newAddress;
+        }
 
         var query = username + "/";
-
-        if ( newAddress.match(/@EXCHANGE\.MIT\.EDU$/i) ||
-             newAddress.match(/@PO.*\.MIT\.EDU$/i) ) {
-            query += newAddress + "/";
-            usedAddress = true;
-        }
-
-        for ( var i = 0; i < mailboxes.length; i++ ) {
-            if ( i != boxToReplace )
-                query += mailboxes[i].address + "/";
-        }
-
-        if ( !usedAddress )
-            query += newAddress + "/";
+        if ( internal != null )
+            query += internal + "/";
+        if ( external != null )
+            query += external + "/";
         query = query.substring( 0, query.length - 1 ); // trim trailing slash
+
         apiQuery( query, "PUT", updateUI );
     });
 
@@ -323,7 +369,7 @@
 
             var addr = "";
             for ( var i = 0; i < mailboxes.length; i++ )
-                if ( mailboxes[i].type != "EXCHANGE" ) {
+                if ( mailboxes[i].type != type ) {
                     apiQuery( username + "/" + mailboxes[i].address,
                         "PUT", updateUI );
                     return
@@ -333,5 +379,5 @@
 
     $( "#exchange" ).find( ".del" ).click( del( "EXCHANGE" ) );
     $( "#imap" ).find( ".del" ).click( del( "IMAP" ) );
-    $( "#exernal" ).find( ".del" ).click( del( "SMTP" ) );
+    $( "#smtp" ).find( ".del" ).click( del( "SMTP" ) );
 })();
