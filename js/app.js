@@ -232,25 +232,10 @@
         });
     }
 
-    /* On Load: Initialize Page */
-    $( ".timeago" ).timeago();
-    $( "#split-option" ).tooltip();
-
-    var login = $( "#login" );
-    login.attr( "disabled", false );
-    login.text( LOGIN_ACTION );
-    $( "#landing" ).removeClass( "hidden" );
-
-    session = JSON.parse( sessionStorage.getItem( TICKET_LABEL ) );
-    if ( session !== null ) {
-        console.log( "Loading session from storage..." );
-        logMeIn( session );
-    }
-
     /* Button Handlers */
-    login.click( function( event ) {
+    $( "#login" ).click( function( event ) {
         event.preventDefault();
-	login.attr( "disabled", true );
+        login.attr( "disabled", true );
         login.text( LOGIN_ONGOING );
 
         WinChan.open({
@@ -382,4 +367,50 @@
     $( "#exchange" ).find( ".del" ).click( del( "EXCHANGE" ) );
     $( "#imap" ).find( ".del" ).click( del( "IMAP" ) );
     $( "#smtp" ).find( ".del" ).click( del( "SMTP" ) );
+
+    /* On Load: Initialize Page */
+    $( ".timeago" ).timeago();
+    $( "#split-option" ).tooltip();
+
+    var login = $( "#login" );
+    login.attr( "disabled", false );
+    login.text( LOGIN_ACTION );
+    $( "#landing" ).removeClass( "hidden" );
+
+    /* Special: #mockup inserts fake data into page */
+    if ( window.location.hash == "#mockup" ) {
+        username = "jflorey";
+        $( ".thisuser" ).text( username + "@mit.edu" );
+
+        $( "#exchange .fwdaddr" ).text( "florey@EXCHANGE.MIT.EDU" );
+        $( "#imap .fwdaddr" ).text( "florey@PO12.MIT.EDU" );
+        $( "#smtp .fwdaddr" ).text( "hack.punt.tool@gmail.com" );
+        $( "#smtp-link" ).attr( "href", "https://www.gmail.com/" );
+
+        mailboxes = [ { "type" : "EXCHANGE" },
+                      { "type" : "IMAP" },
+                      { "type" : "SMTP" } ]
+        boxToReplace = 0;
+        updateSplitUI();
+
+        $( "#lastmod-time" ).timeago( "update", "yesterday" );
+        $( "#lastmod-user" ).text( "somebody" );
+
+        $( "#login" ).unbind( "click" ).click(
+            function( event ) { event.preventDefault(); } );
+        $( ".del" ).unbind( "click" );
+        $( "#restore-default" ).unbind( "click" ).click(
+            function( event ) { event.preventDefault(); } );
+        $( "#update-form" ).unbind( "submit" );
+
+        $( "#app" ).removeClass( "hidden" );
+        return;
+    }
+
+    /* Load Session, if any */
+    session = JSON.parse( sessionStorage.getItem( TICKET_LABEL ) );
+    if ( session !== null ) {
+        console.log( "Loading session from storage..." );
+        logMeIn( session );
+    }
 })();
