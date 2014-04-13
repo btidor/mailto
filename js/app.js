@@ -170,7 +170,7 @@
         // update UI to display or hide each kind of mailbox
         updateMailboxUI( "#exchange", exchange );
         updateMailboxUI( "#imap", imap );
-        updateMailboxUI( "#external", smtp );
+        updateMailboxUI( "#smtp", smtp );
 
         // initialize split/replace UI
         boxToReplace = 0;
