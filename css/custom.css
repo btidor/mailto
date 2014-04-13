@@ -22,6 +22,22 @@
   float: right;
 }
 
+#author {
+  width: 60px;
+  height: 60px;
+  padding: 15px;
+
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  opacity: 0.5;
+}
+
+#author:hover {
+  opacity: 1;
+}
+
 .email {
   font-weight: bold;
   color: #555;

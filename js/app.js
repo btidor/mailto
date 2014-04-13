@@ -372,6 +372,7 @@
     /* On Load: Initialize Page */
     $( ".timeago" ).timeago();
     $( "#split-option" ).tooltip();
+    $( "#author" ).tooltip();
 
     var login = $( "#login" );
     login.attr( "disabled", false );
