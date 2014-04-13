@@ -3,6 +3,8 @@
     var REALM = "ATHENA.MIT.EDU";
     var PRINCIPAL = [ "moira", "moira7.mit.edu" ];
 
+    var TICKET_LABEL = "webathena"; // name in storage and in GET data
+
     var LOGIN_ACTION = "Log In with Webathena";
     var LOGIN_ONGOING = "Logging In...";
 
@@ -35,7 +37,7 @@
         $.ajax({
             type: method,
             url: "./api/v1/" + endpoint + "?webathena=" +
-                btoa( sessionStorage.getItem( "webathena" ) ),
+                btoa( sessionStorage.getItem( TICKET_LABEL ) ),
         }).done( function( response ) {
             callback( JSON.parse( response ) );
         }).fail( function ( jqXHR ) {
@@ -239,7 +241,7 @@
     login.text( LOGIN_ACTION );
     $( "#landing" ).removeClass( "hidden" );
 
-    session = JSON.parse( sessionStorage.getItem( "webathena" ) );
+    session = JSON.parse( sessionStorage.getItem( TICKET_LABEL ) );
     if ( session !== null ) {
         console.log( "Loading session from storage..." );
         logMeIn( session );
@@ -294,7 +296,7 @@
 
             // Success! Put session information into a cookie and update UI
             console.log( "Login succeeded." );
-            sessionStorage.setItem( "webathena", JSON.stringify( r.session ) );
+            sessionStorage.setItem( TICKET_LABEL, JSON.stringify( r.session ) );
             logMeIn( r.session );
         });
     });
