@@ -1,5 +1,9 @@
 RewriteEngine on
 
+# Fully-qualify domain names
+RewriteCond %{SERVER_NAME} !.mit.edu$
+RewriteRule (.*) https://%{SERVER_NAME}.mit.edu%{REQUEST_URI} [R=301,L]
+
 # Enforece SSL
 RewriteCond %{HTTPS} !=on
 RewriteRule (.*) https://%{SERVER_NAME}%{REQUEST_URI} [R=302,L]
