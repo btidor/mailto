@@ -100,7 +100,7 @@ def pobox_status(user):
         if len(e.args) >= 2 and e[1].lower() == "no such user":
             abort(404, e[1])
         raise e
-    
+
     # Search Moira
     moira_addresses = boxinfo["address"].split(", ")
     exchange = []
@@ -141,10 +141,10 @@ def pobox_status(user):
         if "accepted" in tn.read_very_eager():
             # Success: "250 2.0.0 RCPT TO accepted\r\n"
             # Failure: "550 5.1.1 Recipient address rejected: User unknown\r\n"
-            exchange.append("%@EXCHANGE.MIT.EDU" % user)
+            exchange.append("%s@EXCHANGE.MIT.EDU" % user)
         tn.write("RSET\r\nQUIT\r\n")
         tn.close()
-    
+
     # Construct Response
     boxes = []
     for addresses, mtype in ((exchange, "EXCHANGE"), (imap, "IMAP"),
