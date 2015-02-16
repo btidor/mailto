@@ -40,8 +40,6 @@
 import moira
 import os
 import re
-import socket
-import telnetlib
 
 from bottle import get, put, delete, abort, request
 from bottle_webathena import *
@@ -115,36 +113,6 @@ def pobox_status(user):
         else:
             external.append(address)
 
-    # After checking Moira, we're now looking for accounts that aren't active
-    # but that users might want to re-enable, for example a defunct Exchange
-    # inbox.
-
-    # Check DNS for $user.mail.mit.edu. For users who have ever had an IMAP
-    # account, this should point to a PO## server; Exchange-only users are
-    # pointed at IMAP.EXCHANGE.MIT.EDU.
-    dynamichost = socket.getfqdn("%s.mail.mit.edu" % user)
-    m = re.search("^IMAP.EXCHANGE.MIT.EDU$", dynamichost, re.IGNORECASE)
-    if not exchange and m:
-        exchange.append("%s@EXCHANGE.MIT.EDU" % user)
-    m = re.search("^PO(\d+).MAIL.MIT.EDU$", dynamichost, re.IGNORECASE)
-    if not imap and m:
-        imap.append("%s@PO%s.MIT.EDU" % (user, m.group(1)))
-
-    # If the user shows no indication of having an Exchange account, there's one
-    # more test we can run: go to the mail servers and ask.
-    if not exchange:
-        tn = telnetlib.Telnet("mailsec-scanner-2.mit.edu", 25)
-        tn.write("EHLO mailto.mit.edu\r\n")
-        tn.write("MAIL FROM:<mailto@mit.edu>\r\n")
-        tn.read_very_eager()
-        tn.write("RCPT TO:<%s@exchange.mit.edu>\r\n" % user)
-        if "accepted" in tn.read_very_eager():
-            # Success: "250 2.0.0 RCPT TO accepted\r\n"
-            # Failure: "550 5.1.1 Recipient address rejected: User unknown\r\n"
-            exchange.append("%s@EXCHANGE.MIT.EDU" % user)
-        tn.write("RSET\r\nQUIT\r\n")
-        tn.close()
-
     # Construct Response
     boxes = []
     for addresses, mtype in ((exchange, "EXCHANGE"), (imap, "IMAP"),
@@ -152,7 +120,7 @@ def pobox_status(user):
         for address in addresses:
             boxes.append({"address": address,
                           "type": mtype,
-                          "enabled": address in moira_addresses})
+                          "enabled": True})
     isotime = datetime.strptime(boxinfo["modtime"], MOIRA_TIME_FORMAT) \
         .isoformat()
     return {"boxes": boxes,
