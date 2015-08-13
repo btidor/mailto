@@ -58,7 +58,12 @@
     if (!/^https?:\/\//.test(url)) url = window.location.href;
     var a = document.createElement('a');
     a.href = url;
-    return a.protocol + "//" + a.host;
+
+    // remove protocol from evaluated hostname, since IE10+ appends it by default
+    var re = {'http:': /:80$/, 'https:': /:443$/}[a.protocol];
+    var host = re ? a.host.replace(re, '') : a.host;
+
+    return a.protocol + "//" + host;
   }
 
   // find the relay iframe in the opener
